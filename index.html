@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>ICG Project</title>
+		<style>
+			body { margin: 0; }
+		</style>
+	</head>
+	<body>
+		<!-- Div which will hold the renderer output -->
+
+		<div id="WebGL-output"> </div>
+
+		<!-- The library -->
+
+		<script type="importmap">
+			{
+    			"imports": {
+     				"three": "https://threejs.org/build/three.module.js",
+					 "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"
+
+				}
+  			}
+		</script>
+		<script type="module" src="main.js"></script>
+	</body>
+</html>
