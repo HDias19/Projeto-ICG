@@ -94,9 +94,13 @@ function animate() {
     requestAnimationFrame(animate);
 
     for (let i = 0; i < doors.length; i++) {
-        if (doorAngles[i] < Math.PI / 2) {
-            doorAngles[i] += 0.01; // Adjust the opening speed
-            doors[i].rotation.z = doorAngles[i];
+        if (doorAngles[i][0] < Math.PI / 2 && doorAngles[i][1] == 'r') {
+            doorAngles[i][0] += 0.01; 
+            doors[i].rotation.z = doorAngles[i][0];
+        } else if (doorAngles[i][0] > 3*Math.PI / 2 && doorAngles[i][1] == 'l') {
+            doorAngles[i][0] -= 0.01; 
+            doors[i].rotation.z = doorAngles[i][0];
+            console.log(doorAngles[i][0])
         }
     }
 
@@ -131,10 +135,10 @@ function createPlant(scene) {
     doorFrames.push(createDoorFrame3(5, 6-1/2, 1.5))
     doorFrames.push(createDoorFrame3(7, 7, 1.5))
 
-    doors.push(createDoor(1, 0.05, 2.2, 6+1.15, 1, 1.1))
-    doors.push(createDoor(0.9, 0.05, 2.2, 6, 7.5, 1.1))
-    doors.push(createDoor(0.9, 0.05, 2.2, 5, 7.5, 1.1))
-    doors.push(createDoor(0.9, 0.05, 2.2, 7, 7.5, 1.1))
+    doors.push(createDoor(1, 0.05, 2.2, 6+1.3/2, 1, 1.1))
+    doors.push(createDoor(0.9, 0.05, 2.2, 6-0.9/2, 7.5, 1.1, 1))
+    doors.push(createDoor(0.9, 0.05, 2.2, 5-0.9/2, 7.5, 1.1))
+    doors.push(createDoor(0.9, 0.05, 2.2, 6+0.9/2, 7.5, 1.1))
     doors.push(createDoor(0.05, 0.9, 2.2, 5, 6-1/2, 1.1))
     doors.push(createDoor(0.05, 0.9, 2.2, 7, 7, 1.1))
 
@@ -148,7 +152,6 @@ function createPlant(scene) {
 
     doors.forEach(door => {
         scene.add(door)
-        doorAngles.push(0)
     })
 }
 
@@ -164,18 +167,32 @@ function createWall(tx,ty,tz,px,py,pz) {
     return wall;
 }
 
-function createDoor(tx,ty,tz,px,py,pz) {
+function createDoor(tx,ty,tz,px,py,pz,r=0) {
     const doorGeometry = new THREE.BoxGeometry(tx, ty, tz);
     const doorMaterial = new THREE.MeshLambertMaterial({color: 0xB8860B});
     const door = new THREE.Mesh(doorGeometry, doorMaterial);
     door.position.set(px, py, pz);
     door.receiveShadow = true;
     door.castShadow = true;
-    if (tx > 0.05) {
+    if (tx > 0.05 && r == 0) {
+        door.geometry.translate(tx/2, 0, 0);
+        door.position.x -= tx/2;
+        doorAngles.push([2*Math.PI,'l'])
+    } else if (tx > 0.05 && r == 1) {
         door.geometry.translate(-tx/2, 0, 0);
-    } else {
-        door.geometry.translate(0, -ty/2, 0);}
-    return door;
+        door.position.x += tx/2;
+        doorAngles.push([0,'r'])
+    } else if (ty > 0.05 && r == 0) {
+        door.geometry.translate(0, -ty/2, 0);
+        door.position.y += ty/2;
+        doorAngles.push([2*Math.PI,'l'])
+    } else if (ty > 0.05 && r == 1) {
+        door.geometry.translate(0, ty/2, 0);
+        door.position.y -= ty/2;
+        doorAngles.push([2*Math.PI,'l'])
+    }
+
+    return door
 }
 
 function createDoorFrame1(px, py, pz) {
