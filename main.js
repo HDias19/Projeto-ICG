@@ -1,13 +1,22 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { FirstPersonControls } from 'three/addons/controls/FirstPersonControls.js';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+let scale = 1.2
 
 let walls = [];
 let doorFrames = [];
 let doors = [];
 let doorAngles = [];
-let controls, renderer, scene, camera;
+let ceiling;
+let controls, renderer, scene, camera, gui, fpcontrols, fpcamera, clock
+let fp = false;
 
 function init() {
+    //clock
+    clock = new THREE.Clock();
+
     //scene
     scene = new THREE.Scene();
     scene.rotation.x = -0.5 * Math.PI; 
@@ -78,10 +87,60 @@ function init() {
     const spotLightHelper = new THREE.SpotLightHelper(spotLight);
     // scene.add(spotLightHelper);
 
-    window.addEventListener( 'resize', onWindowResize );
+    
 
+    //house position (example)
+    const housePosition = new THREE.Vector3(6, 6, 0); // Update with actual house coordinates
+
+    //first person camera
+    fpcamera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
+    fpcamera.position.set(6, 6, 20); // Set initial position
+    fpcamera.lookAt(housePosition); // Make the camera look at the house
+
+    fpcontrols = new FirstPersonControls(fpcamera, renderer.domElement);
+    fpcontrols.lookSpeed = 0.1;
+    fpcontrols.enabled = false
+    fpcontrols.movementSpeed = 5;
+    fpcontrols.lookVertical = true;
+    fpcontrols.nofly = true;
+    fpcontrols.position = new THREE.Vector3(0, 0, 1.5); // Set initial position
+
+    gui = new GUI()
+    const base = {
+        Switch: function() {
+            fp = !fp
+            controls.enabled = !controls.enabled
+            fpcontrols.enabled = !fpcontrols.enabled
+            ceiling.visible = !ceiling.visible
+        }
+    }
+
+    gui.add(base, 'Switch').listen()
+
+    window.addEventListener('resize', onWindowResize, false);
     //animation
+    
+    //scale
+    // scaleScene(5)
+    // for (let i = 0; i < scene.children.length; i++) {
+    //     scene.children[i].scale.set(scale, scale, scale);
+    // }
+    
     animate()
+}
+
+function scaleScene(scaleFactor) {
+    scene.traverse(function (object) {
+        if (object instanceof THREE.Mesh) {
+            object.scale.multiplyScalar(scaleFactor);
+            object.position.multiplyScalar(scaleFactor);
+        }
+    });
+
+    // Adjust camera positions as well
+    camera.position.multiplyScalar(scaleFactor);
+    fpcamera.position.multiplyScalar(scaleFactor);
+    fpcontrols.update(1);
 }
 
 function onWindowResize() {
@@ -91,22 +150,19 @@ function onWindowResize() {
 }
 
 function animate() {
+    let delta = clock.getDelta();
+
     requestAnimationFrame(animate);
-
-    for (let i = 0; i < doors.length; i++) {
-        if (doorAngles[i][0] < Math.PI / 2 && doorAngles[i][1] == 'r') {
-            doorAngles[i][0] += 0.01; 
-            doors[i].rotation.z = doorAngles[i][0];
-        } else if (doorAngles[i][0] > 3*Math.PI / 2 && doorAngles[i][1] == 'l') {
-            doorAngles[i][0] -= 0.01; 
-            doors[i].rotation.z = doorAngles[i][0];
-            console.log(doorAngles[i][0])
-        }
-    }
-
     controls.update()
+    fpcontrols.update(delta)
 
-    renderer.render(scene, camera);
+    if (fp == true) {
+        fpcontrols.object.position.y = 1.50; // Adjust based on floor size
+        renderer.render(scene, fpcamera);
+    }
+    else {
+        renderer.render(scene, camera);
+    }
     // renderer.render(scene, basicCamera);
 }
 
@@ -153,13 +209,19 @@ function createPlant(scene) {
     doors.forEach(door => {
         scene.add(door)
     })
+
+    ceiling = createWall(7, 10, 0.1, 6, 6, 3)
+    ceiling.castShadow = true
+    ceiling.receiveShadow = true
+    scene.add(ceiling)
+    ceiling.visible = false
 }
 
 function createWall(tx,ty,tz,px,py,pz) {
     if (tx > 0.1) { tx += 0.05 } else { ty += 0.05 }
     const wallGeometry = new THREE.BoxGeometry(tx,ty,tz);
     const wallMaterial = new THREE.MeshLambertMaterial({color: 0xd3d3d3});
-    const wall = new THREE.Mesh(wallGeometry, wallMaterial);
+    let wall = new THREE.Mesh(wallGeometry, wallMaterial);
     wall.position.set(px, py, pz);
     wall.receiveShadow = true;
     wall.castShadow = true;
@@ -167,6 +229,7 @@ function createWall(tx,ty,tz,px,py,pz) {
     return wall;
 }
 
+// remake door creation function
 function createDoor(tx,ty,tz,px,py,pz,r=0) {
     const doorGeometry = new THREE.BoxGeometry(tx, ty, tz);
     const doorMaterial = new THREE.MeshLambertMaterial({color: 0xB8860B});
@@ -174,23 +237,6 @@ function createDoor(tx,ty,tz,px,py,pz,r=0) {
     door.position.set(px, py, pz);
     door.receiveShadow = true;
     door.castShadow = true;
-    if (tx > 0.05 && r == 0) {
-        door.geometry.translate(tx/2, 0, 0);
-        door.position.x -= tx/2;
-        doorAngles.push([2*Math.PI,'l'])
-    } else if (tx > 0.05 && r == 1) {
-        door.geometry.translate(-tx/2, 0, 0);
-        door.position.x += tx/2;
-        doorAngles.push([0,'r'])
-    } else if (ty > 0.05 && r == 0) {
-        door.geometry.translate(0, -ty/2, 0);
-        door.position.y += ty/2;
-        doorAngles.push([2*Math.PI,'l'])
-    } else if (ty > 0.05 && r == 1) {
-        door.geometry.translate(0, ty/2, 0);
-        door.position.y -= ty/2;
-        doorAngles.push([2*Math.PI,'l'])
-    }
 
     return door
 }
