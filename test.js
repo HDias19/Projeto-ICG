@@ -11,6 +11,8 @@ let pl = false
 let walls = []
 let doors = []
 let doorRotation = []
+let doorOpen = []
+let lamps = []
 let ceilingWall
 let player
 
@@ -72,7 +74,7 @@ function init()
     spotLight.position.set(10, 10, 10);
     spotLight.castShadow = true;
     spotLight.decay = 0;
-    // scene.add(spotLight);
+    scene.add(spotLight);
 
 
     // Orbit Controls
@@ -81,27 +83,186 @@ function init()
     orbitcontrols.dampingFactor = 0.25;
     orbitcontrols.update()
 
+    // House Creation
+    createHouse()
+
     // GUI
     gui = new GUI()
     const base = {
-        Up: function() {
-            up = !up
-        },
+        // Up: function() {
+        //     up = !up
+        // },
         FirstPerson: function() {
             pl = !pl
             orbitcontrols.enabled = !orbitcontrols.enabled
             fpcontrols.enabled = !fpcontrols.enabled
+            ceilingWall.visible = !ceilingWall.visible
         },
         Ceiling: function() {
             ceilingWall.visible = !ceilingWall.visible
-        }   
+        },
+        MainDoor: function() {
+            doorOpen[0] = !doorOpen[0]
+        },
+        Doors: function() {
+            for (let i = 0; i < doorOpen.length; i++) {
+                doorOpen[i] = !doorOpen[i]
+            }
+        },
     }
 
-    gui.add(base, 'Up').listen()
+    const KitchenFolder = gui.addFolder('Kitchen'),
+    kitchen = {
+        get 'Kitchen Light' () {
+            return lamps[1].intensity
+        },
+        set 'Kitchen Light' (value) {
+            lamps[1].intensity = value
+        },
+    }
+    KitchenFolder.add(kitchen, 'Kitchen Light', 0, 1).listen()
+    KitchenFolder.close()
+
+    const LivingFolder = gui.addFolder('Living Room'),
+    living = {
+        get 'Living Room Light' () {
+            return lamps[2].intensity
+        },
+        set 'Living Room Light' (value) {
+            lamps[2].intensity = value
+        },
+    }
+    LivingFolder.add(living, 'Living Room Light', 0, 1).listen()
+    LivingFolder.close()
+
+    const Bathroom1F = gui.addFolder('Main Bathroom'),
+    bathroom1 = {
+        get 'Bathroom Light' () {
+            return lamps[3].intensity
+        },
+        set 'Bathroom Light' (value) {
+            lamps[3].intensity = value
+        },
+        get 'Bathroom Door' () {
+            return doorOpen[5]
+        },
+        set 'Bathroom Door' (value) {
+            doorOpen[5] = !doorOpen[5]
+        },
+    }
+    Bathroom1F.add(bathroom1, 'Bathroom Light', 0, 1).listen()
+    Bathroom1F.add(bathroom1, 'Bathroom Door').listen()
+    Bathroom1F.close()
+
+    const Bathroom2F = gui.addFolder('Private Bathroom'),
+    bathroom2 = {
+        get 'Bathroom Light' () {
+            return lamps[4].intensity
+        },
+        set 'Bathroom Light' (value) {
+            lamps[4].intensity = value
+        },
+        get 'Bathroom Door' () {
+            return doorOpen[3]
+        },
+        set 'Bathroom Door' (value) {
+            doorOpen[3] = !doorOpen[3]
+        },
+    }
+    Bathroom2F.add(bathroom2, 'Bathroom Light', 0, 1).listen()
+    Bathroom2F.add(bathroom2, 'Bathroom Door').listen()
+    Bathroom2F.close()
+
+    const Bedroom1 = gui.addFolder('Main Bedroom 1'),
+    bedroom1 = {
+        get 'Bedroom Light' () {
+            return lamps[5].intensity
+        },
+        set 'Bedroom Light' (value) {
+            lamps[5].intensity = value
+        },
+        get 'Bedroom Door' () {
+            return doorOpen[2]
+        },
+        set 'Bedroom Door' (value) {
+            doorOpen[2] = !doorOpen[2]
+        },
+    }
+    Bedroom1.add(bedroom1, 'Bedroom Light', 0, 1).listen()
+    Bedroom1.add(bedroom1, 'Bedroom Door').listen()
+    Bedroom1.close()
+
+    const Bedroom2 = gui.addFolder('Main Bedroom 2'),
+    bedroom2 = {
+        get 'Bedroom Light' () {
+            return lamps[6].intensity
+        },
+        set 'Bedroom Light' (value) {
+            lamps[6].intensity = value
+        },
+        get 'Bedroom Door' () {
+            return doorOpen[1]
+        },
+        set 'Bedroom Door' (value) {
+            doorOpen[1] = !doorOpen[1]
+        },
+    }
+    Bedroom2.add(bedroom2, 'Bedroom Light', 0, 1).listen()
+    Bedroom2.add(bedroom2, 'Bedroom Door').listen()
+    Bedroom2.close()
+
+    const Bedroom3 = gui.addFolder('Small Bedroom'),
+    bedroom3 = {
+        get 'Bedroom Light' () {
+            return lamps[7].intensity
+        },
+        set 'Bedroom Light' (value) {
+            lamps[7].intensity = value
+        },
+        get 'Bedroom Door' () {
+            return doorOpen[4]
+        },
+        set 'Bedroom Door' (value) {
+            doorOpen[4] = !doorOpen[4]
+        },
+    }
+    Bedroom3.add(bedroom3, 'Bedroom Light', 0, 1).listen()
+    Bedroom3.add(bedroom3, 'Bedroom Door').listen()
+    Bedroom3.close()
+
+    const Hall = gui.addFolder('Hall'),
+    hall = {
+        get 'Hall Light' () {
+            return lamps[0].intensity
+        },
+        set 'Hall Light' (value) {
+            lamps[0].intensity = value
+        },
+    }
+    Hall.add(hall, 'Hall Light', 0, 1).listen()
+    Hall.close()
+
+    const Sun = gui.addFolder('Sun'),
+    sun = {
+        get 'Sun Intensity' () {
+            return spotLight.intensity
+        },
+        set 'Sun Intensity' (value) {
+            spotLight.intensity = value
+        },
+    }
+    Sun.add(sun, 'Sun Intensity', 0, 1).listen()
+    Sun.close()
+
+
+
+    // gui.add(base, 'Up').listen()
     gui.add(base, 'FirstPerson').listen()
     gui.add(base, 'Ceiling').listen()
+    gui.add(base, 'MainDoor').listen()
+    gui.add(base, 'Doors').listen()
+    gui.close()
 
-    createHouse()
     ceilingWall.visible = false
 
     const playerGeometry = new THREE.BoxGeometry(0.02, 0.02, 0.02);
@@ -392,6 +553,7 @@ function createDoor(tx, ty, tz, px, py, pz, type) {
     trueDoor.add(door)
     scene.add(trueDoor);
     doors.push(trueDoor)
+    doorOpen.push(false)
 }
 
 // Create Ceiling Lamps
@@ -399,6 +561,7 @@ function createLamp(px, py, pz) {
     const pointLight = new THREE.PointLight(0xffff88, 0.8, 50);
     pointLight.position.set(px, py, pz);
     scene.add(pointLight);
+    lamps.push(pointLight)
 }
 
 // Check Collision with wall
@@ -440,16 +603,55 @@ function animate() {
     requestAnimationFrame(animate);
     let delta = clock.getDelta();
     for (let i = 0; i < doors.length; i++) {
-        if (doors[i].rotation.y <= Math.PI/2.2 && doorRotation[i] == 1) {
-            doors[i].rotateY(0.02)
-        } else if (doors[i].rotation.y >= -Math.PI/2.2 && doorRotation[i] == -1) {
-            doors[i].rotateY(-0.02)
-        } else if (doors[i].rotation.y >= -Math.PI/2.2 && doorRotation[i] == 2) {
-            doors[i].rotateY(0.02)
-        } else if (doors[i].rotation.y <= Math.PI/2.2 && doorRotation[i] == 3) {
-            doors[i].rotateY(0.02)
-        } else if (doors[i].rotation.y >= -Math.PI/2.2 && doorRotation[i] == 4) {
-            doors[i].rotateY(-0.02)
+        if (doors[i].rotation.y > 0 && doorRotation[i] == 1) {
+            if (!doorOpen[i]) {
+                doors[i].rotateY(-0.02)
+            }
+        } 
+        if (doors[i].rotation.y <= 1.44 && doorRotation[i] == 1) {
+            if (doorOpen[i]) {
+                doors[i].rotateY(0.02)
+            }
+        }
+        if (doors[i].rotation.y < 0 && doorRotation[i] == -1) {
+            if (!doorOpen[i]) {
+                doors[i].rotateY(0.02)
+            }
+        } 
+        if (doors[i].rotation.y >= -1.44 && doorRotation[i] == -1) {
+            if (doorOpen[i]) {
+                doors[i].rotateY(-0.02)
+            }
+        }
+        if (doors[i].rotation.y < 0 && doorRotation[i] == 2) {
+            if (!doorOpen[i]) {
+                doors[i].rotateY(-0.02)
+            }
+        } 
+        if (doors[i].rotation.y >= -1.44 && doorRotation[i] == 2) {
+            if (doorOpen[i]) {
+                doors[i].rotateY(0.02)
+            }
+        }
+        if (doors[i].rotation.y > 0 && doorRotation[i] == 3) {
+            if (!doorOpen[i]) {
+                doors[i].rotateY(-0.02)
+            }
+        } 
+        if (doors[i].rotation.y <= 1.44 && doorRotation[i] == 3) {
+            if (doorOpen[i]) {
+                doors[i].rotateY(0.02)
+            }
+        } 
+        if (doors[i].rotation.y < 0 && doorRotation[i] == 4) {
+            if (!doorOpen[i]) {
+                doors[i].rotateY(0.02)
+            }
+        } 
+        if (doors[i].rotation.y >= -1.44 && doorRotation[i] == 4) {
+            if (doorOpen[i]) {
+                doors[i].rotateY(-0.02)
+            }
         }
     }
 
